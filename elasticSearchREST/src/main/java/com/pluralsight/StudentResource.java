@@ -14,17 +14,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.pluralsight.model.Student;
+import com.model.Student;
 import com.pluralsight.repository.StudentRepository;
 
 @Path("elasticsearch")
+@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 public class StudentResource {
 
 	@Inject
 	private StudentRepository studentRepository;
 
 	@GET
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 	@Path("{index}/{type}")
 	public List<Student> getAllStudents(@PathParam("index") String index, @PathParam("type") String type) {
 		return studentRepository.findAllStudents(index, type);

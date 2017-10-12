@@ -39,6 +39,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.model</groupId>
+			<artifactId>elasticSearch</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20140107</version>

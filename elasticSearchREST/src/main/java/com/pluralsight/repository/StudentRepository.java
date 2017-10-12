@@ -2,7 +2,11 @@ package com.pluralsight.repository;
 
 import java.util.List;
 
-import com.pluralsight.model.Student;
+import com.model.Student;
+
+
+
+
 
 public interface StudentRepository {
 
