@@ -4,10 +4,6 @@ import java.util.List;
 
 import com.model.Student;
 
-
-
-
-
 public interface StudentRepository {
 
 	List<Student> findAllStudents(String index, String type);

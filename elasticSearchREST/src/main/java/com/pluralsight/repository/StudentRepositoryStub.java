@@ -21,19 +21,22 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.model.Student;
 
 public class StudentRepositoryStub implements StudentRepository {
 
-	private Gson gson = new Gson();
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	private static final Client client;
 
 	static {
-		Properties p = new Properties();
 
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		final Properties p = new Properties();
+
+		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
 
 		InputStream input = null;
 
@@ -42,13 +45,16 @@ public class StudentRepositoryStub implements StudentRepository {
 			input = loader.getResourceAsStream("config.properties");
 
 			p.load(input);
-			String host = p.getProperty("elasticSearchHost").trim();
 
-			String port = p.getProperty("elasticSearchPort").trim();
+			final String host = p.getProperty("elasticSearchHost").trim();
 
-			int portNumber = Integer.parseInt(port);
+			final String port = p.getProperty("elasticSearchPort").trim();
+
+			final int portNumber = Integer.parseInt(port);
+
 			template = TransportClient.builder().build()
 					.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), portNumber));
+
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -59,39 +65,37 @@ public class StudentRepositoryStub implements StudentRepository {
 		client = template;
 	}
 
+
 	public List<Student> findAllStudents(String index, String type) {
 
-		int scrollSize = 1000;
+		Student student = null;
+		final int scrollSize = 1000;
 
 		SearchResponse response = null;
 
 		int i = 0;
 
-		// List<String> esData = new ArrayList<String>();
-
 		List<Student> students = new ArrayList<Student>();
 
-		SearchRequestBuilder addSort = client.prepareSearch(index).setTypes(type)
+		final SearchRequestBuilder addSort = client.prepareSearch(index).setTypes(type)
 				.setQuery(QueryBuilders.matchAllQuery()).setSize(scrollSize).addSort("id", SortOrder.ASC);
 
 		while (response == null || response.getHits().hits().length != 0) {
-
-			// esData.clear();
 
 			response = addSort.setFrom(i * scrollSize).get();
 
 			for (SearchHit hit : response.getHits()) {
 
-				// esData.add();
-				Student student = gson.fromJson(hit.getSourceAsString(), Student.class);
-
+				try {
+					student = objectMapper.readValue(hit.getSourceAsString(), Student.class);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				students.add(student);
 
 			}
 
 			i++;
-
-			// for (String source : esData) {
 
 		}
 
@@ -101,11 +105,16 @@ public class StudentRepositoryStub implements StudentRepository {
 
 	public Student findStudent(String index, String type, String studentId) {
 
-		GetResponse response = client.prepareGet(index, type, studentId).get();
+		final GetResponse response = client.prepareGet(index, type, studentId).get();
 
-		String search = response.getSourceAsString();
+		final String search = response.getSourceAsString();
 
-		Student student = gson.fromJson(search, Student.class);
+		Student student = null;
+		try {
+			student = objectMapper.readValue(search, Student.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		return student;
 
@@ -113,8 +122,15 @@ public class StudentRepositoryStub implements StudentRepository {
 
 	public void addStudent(Student student, String index, String type) {
 
-		String id = student.getId();
-		String json = gson.toJson(student, Student.class);
+		final String id = student.getId();
+		String json = null;
+
+		try {
+			json = objectMapper.writeValueAsString(student);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		client.prepareIndex(index, type, id).setSource(json).get();
 	}
